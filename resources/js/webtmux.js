@@ -99,6 +99,33 @@ class WebTmux {
       // Only handle keydown events
       if (ev.type !== 'keydown') return true;
 
+      // Allow Cmd+C / Ctrl+C to copy selected text
+      if ((ev.metaKey || ev.ctrlKey) && ev.key === 'c') {
+        const selection = this.terminal.getSelection();
+        if (selection) {
+          navigator.clipboard.writeText(selection).catch(err => {
+            console.warn('Failed to copy:', err);
+          });
+          return false; // Handled
+        }
+        // No selection - let it pass through as Ctrl+C (interrupt)
+        return true;
+      }
+
+      // Allow Cmd+V / Ctrl+V to paste
+      if ((ev.metaKey || ev.ctrlKey) && ev.key === 'v') {
+        navigator.clipboard.readText().then(text => {
+          if (text) {
+            const bytes = this.encoder.encode(text);
+            const binary = String.fromCharCode(...bytes);
+            this.sendMessage(MSG.Input, btoa(binary));
+          }
+        }).catch(err => {
+          console.warn('Failed to paste:', err);
+        });
+        return false; // Handled
+      }
+
       // Map arrow keys to CSI sequences (ESC [ A/B/C/D)
       // Using CSI instead of SS3 for better compatibility
       const arrowMap = {
