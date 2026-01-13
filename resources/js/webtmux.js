@@ -423,8 +423,9 @@ class WebTmux {
       console.log('Data hex:', hex);
     }
 
-    // OSC 52 regex: \x1b]52;[cp];BASE64(\x07|\x1b\\)
-    const osc52Regex = /\x1b\]52;[cp];([A-Za-z0-9+/=]*?)(?:\x07|\x1b\\)/g;
+    // OSC 52 regex: \x1b]52;[cp]?;BASE64(\x07|\x1b\\)
+    // Note: selection param can be empty (;;), c, p, s, or 0-7
+    const osc52Regex = /\x1b\]52;[cpqs0-7]?;([A-Za-z0-9+/=]*?)(?:\x07|\x1b\\)/g;
     let match;
     let result = data;
 
