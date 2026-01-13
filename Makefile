@@ -49,7 +49,7 @@ clean:
 	rm -rf $(BINARY_NAME) $(OUTPUT_DIR)
 
 # Cross-compile for all platforms
-cross-compile: clean
+cross-compile: clean sync-assets
 	@echo "Cross-compiling $(BINARY_NAME) $(VERSION) for all platforms..."
 	@mkdir -p $(OUTPUT_DIR)
 	@for platform in $(PLATFORMS); do \
