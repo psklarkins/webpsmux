@@ -82,8 +82,9 @@ class WebTmux {
       console.warn('WebGL addon not supported:', e);
     }
 
-    // Fit terminal
+    // Fit terminal and focus
     this.fitAddon.fit();
+    this.terminal.focus();
 
     // Setup resize observer
     const resizeObserver = new ResizeObserver(() => {
