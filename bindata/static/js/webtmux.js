@@ -415,9 +415,18 @@ class WebTmux {
   // Handle OSC 52 clipboard sequences from tmux
   // Format: ESC ] 52 ; Pc ; Pd BEL  or  ESC ] 52 ; Pc ; Pd ESC \
   handleOSC52(data) {
-    // Look for OSC 52 start sequence
-    const oscStart = '\x1b]52;';
+    // Look for OSC 52 start sequence - use charCode to be safe
+    const ESC = String.fromCharCode(0x1b);
+    const oscStart = ESC + ']52;';
     let result = data;
+
+    // Debug: show what we're looking for vs what we have
+    console.log('Looking for oscStart codes:', [...oscStart].map(c => c.charCodeAt(0).toString(16)));
+    const escIdx = data.indexOf(ESC);
+    if (escIdx !== -1) {
+      console.log('Found ESC at', escIdx, ', next 6 chars:', [...data.substring(escIdx, escIdx + 6)].map(c => c.charCodeAt(0).toString(16)));
+    }
+
     let startIdx = data.indexOf(oscStart);
 
     while (startIdx !== -1) {
