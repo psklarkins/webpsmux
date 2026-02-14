@@ -1,7 +1,7 @@
 // Sidebar component with minimap
 import { LitElement, html, css } from 'lit';
 
-class WebtmuxSidebar extends LitElement {
+class WebpsmuxSidebar extends LitElement {
   static properties = {
     layout: { type: Object },
     activePane: { type: String },
@@ -226,7 +226,7 @@ class WebtmuxSidebar extends LitElement {
     this.collapsed = false;
 
     // Listen for layout updates
-    window.addEventListener('tmux-layout-update', (e) => {
+    window.addEventListener('psmux-layout-update', (e) => {
       this.layout = e.detail;
       this.activePane = e.detail.activePaneId;
       this.activeWindow = e.detail.activeWindowId;
@@ -256,7 +256,7 @@ class WebtmuxSidebar extends LitElement {
       return html`
         <button class="toggle-btn" @click=${this.toggleCollapsed}>${toggleIcon}</button>
         <div class="sidebar-content">
-          <h3>tmux</h3>
+          <h3>psmux</h3>
           <p style="color: #666; font-size: 12px;">Connecting...</p>
         </div>
       `;
@@ -364,28 +364,28 @@ class WebtmuxSidebar extends LitElement {
   }
 
   selectPane(paneId) {
-    window.webtmux?.selectPane(paneId);
+    window.webpsmux?.selectPane(paneId);
   }
 
   selectWindow(windowId) {
-    window.webtmux?.selectWindow(windowId);
+    window.webpsmux?.selectWindow(windowId);
   }
 
   switchSession(sessionName) {
-    window.webtmux?.switchSession(sessionName);
+    window.webpsmux?.switchSession(sessionName);
   }
 
   splitPane(horizontal) {
-    window.webtmux?.splitPane(horizontal);
+    window.webpsmux?.splitPane(horizontal);
   }
 
   newWindow() {
-    window.webtmux?.newWindow();
+    window.webpsmux?.newWindow();
   }
 
   closePane() {
-    window.webtmux?.closePane(this.activePane);
+    window.webpsmux?.closePane(this.activePane);
   }
 }
 
-customElements.define('webtmux-sidebar', WebtmuxSidebar);
+customElements.define('webpsmux-sidebar', WebpsmuxSidebar);

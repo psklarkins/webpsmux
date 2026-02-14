@@ -19,11 +19,11 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
-	"webtmux/bindata"
-	"webtmux/pkg/homedir"
-	"webtmux/pkg/randomstring"
-	"webtmux/pkg/tmux"
-	"webtmux/webtty"
+	"webpsmux/bindata"
+	"webpsmux/pkg/homedir"
+	"webpsmux/pkg/randomstring"
+	"webpsmux/pkg/psmux"
+	"webpsmux/webtty"
 )
 
 // Server provides a webtty HTTP endpoint.
@@ -36,9 +36,9 @@ type Server struct {
 	titleTemplate    *noesctmpl.Template
 	manifestTemplate *template.Template
 
-	// Tmux support
-	tmuxSession string
-	tmuxCtrl    *tmux.Controller
+	// Psmux support
+	psmuxSession string
+	psmuxCtrl    *psmux.Controller
 }
 
 // New creates a new instance of Server.
@@ -105,29 +105,29 @@ func New(factory Factory, options *Options) (*Server, error) {
 		manifestTemplate: manifestTemplate,
 	}
 
-	// Detect tmux session from command
-	server.tmuxSession = server.detectTmuxSession()
-	if server.tmuxSession != "" {
-		log.Printf("Detected tmux session: %s", server.tmuxSession)
+	// Detect psmux session from command
+	server.psmuxSession = server.detectPsmuxSession()
+	if server.psmuxSession != "" {
+		log.Printf("Detected psmux session: %s", server.psmuxSession)
 	}
 
 	return server, nil
 }
 
-// detectTmuxSession checks if we're running tmux and extracts the session name
-func (server *Server) detectTmuxSession() string {
+// detectPsmuxSession checks if we're running psmux and extracts the session name
+func (server *Server) detectPsmuxSession() string {
 	cmd, argv := server.factory.Command()
 
-	// Check if command is tmux
-	if !strings.HasSuffix(cmd, "tmux") && cmd != "tmux" {
+	// Check if command is psmux
+	if !strings.HasSuffix(cmd, "psmux") && cmd != "psmux" {
 		return ""
 	}
 
 	// Parse argv to find session name
 	// Common patterns:
-	// tmux new-session -A -s <name>
-	// tmux attach -t <name>
-	// tmux attach-session -t <name>
+	// psmux new-session -A -s <name>
+	// psmux attach -t <name>
+	// psmux attach-session -t <name>
 	for i, arg := range argv {
 		if (arg == "-s" || arg == "-t") && i+1 < len(argv) {
 			return argv[i+1]
@@ -135,7 +135,7 @@ func (server *Server) detectTmuxSession() string {
 	}
 
 	// Default session name if not specified
-	return "0"
+	return "default"
 }
 
 // Run starts the main process of the Server.
@@ -148,19 +148,19 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 		opt(opts)
 	}
 
-	// Start tmux controller if we detected a tmux session
-	if server.tmuxSession != "" {
+	// Start psmux controller if we detected a psmux session
+	if server.psmuxSession != "" {
 		var err error
-		server.tmuxCtrl, err = tmux.NewController(server.tmuxSession)
+		server.psmuxCtrl, err = psmux.NewController(server.psmuxSession)
 		if err != nil {
-			log.Printf("Warning: failed to create tmux controller: %v", err)
+			log.Printf("Warning: failed to create psmux controller: %v", err)
 		} else {
-			if err := server.tmuxCtrl.Start(); err != nil {
-				log.Printf("Warning: failed to start tmux controller: %v", err)
-				server.tmuxCtrl = nil
+			if err := server.psmuxCtrl.Start(); err != nil {
+				log.Printf("Warning: failed to start psmux controller: %v", err)
+				server.psmuxCtrl = nil
 			} else {
-				log.Printf("Tmux controller started for session: %s", server.tmuxSession)
-				defer server.tmuxCtrl.Stop()
+				log.Printf("Psmux controller started for session: %s", server.psmuxSession)
+				defer server.psmuxCtrl.Stop()
 			}
 		}
 	}

@@ -1,14 +1,13 @@
 package localcommand
 
 import (
-	"syscall"
 	"time"
 
-	"webtmux/server"
+	"webpsmux/server"
 )
 
 type Options struct {
-	CloseSignal  int `hcl:"close_signal" flagName:"close-signal" flagSName:"" flagDescribe:"Signal sent to the command process when gotty close it (default: SIGHUP)" default:"1"`
+	CloseSignal  int `hcl:"close_signal" flagName:"close-signal" flagSName:"" flagDescribe:"Signal sent to the command process when gotty close it (default: unused on Windows)" default:"0"`
 	CloseTimeout int `hcl:"close_timeout" flagName:"close-timeout" flagSName:"" flagDescribe:"Time in seconds to force kill process after client is disconnected (default: -1)" default:"-1"`
 }
 
@@ -20,7 +19,7 @@ type Factory struct {
 }
 
 func NewFactory(command string, argv []string, options *Options) (*Factory, error) {
-	opts := []Option{WithCloseSignal(syscall.Signal(options.CloseSignal))}
+	opts := []Option{}
 	if options.CloseTimeout >= 0 {
 		opts = append(opts, WithCloseTimeout(time.Duration(options.CloseTimeout)*time.Second))
 	}

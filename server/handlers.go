@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
-	"webtmux/webtty"
+	"webpsmux/webtty"
 )
 
 func (server *Server) generateHandleWS(ctx context.Context, cancel context.CancelFunc, counter *counter) http.HandlerFunc {
@@ -165,12 +165,12 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 		return errors.Wrapf(err, "failed to create webtty")
 	}
 
-	// Set up tmux controller if available
-	if server.tmuxCtrl != nil {
-		tty.SetTmuxController(server.tmuxCtrl)
+	// Set up psmux controller if available
+	if server.psmuxCtrl != nil {
+		tty.SetPsmuxController(server.psmuxCtrl)
 
-		// Start goroutine to listen for tmux events and broadcast layout updates
-		go server.handleTmuxEvents(ctx, tty)
+		// Start goroutine to listen for psmux events and broadcast layout updates
+		go server.handlePsmuxEvents(ctx, tty)
 	}
 
 	err = tty.Run(ctx)
@@ -178,9 +178,9 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 	return err
 }
 
-// handleTmuxEvents polls for tmux layout changes and sends updates to the client
-func (server *Server) handleTmuxEvents(ctx context.Context, tty *webtty.WebTTY) {
-	if server.tmuxCtrl == nil {
+// handlePsmuxEvents polls for psmux layout changes and sends updates to the client
+func (server *Server) handlePsmuxEvents(ctx context.Context, tty *webtty.WebTTY) {
+	if server.psmuxCtrl == nil {
 		return
 	}
 
@@ -195,8 +195,8 @@ func (server *Server) handleTmuxEvents(ctx context.Context, tty *webtty.WebTTY) 
 			return
 		case <-ticker.C:
 			// Refresh and check if layout changed
-			server.tmuxCtrl.RefreshLayout()
-			layout := server.tmuxCtrl.GetLayout()
+			server.psmuxCtrl.RefreshLayout()
+			layout := server.psmuxCtrl.GetLayout()
 			if layout == nil {
 				continue
 			}
@@ -206,8 +206,8 @@ func (server *Server) handleTmuxEvents(ctx context.Context, tty *webtty.WebTTY) 
 			currentLayout := string(data)
 			if currentLayout != lastLayout {
 				lastLayout = currentLayout
-				if err := tty.SendTmuxLayout(); err != nil {
-					log.Printf("Failed to send tmux layout: %v", err)
+				if err := tty.SendPsmuxLayout(); err != nil {
+					log.Printf("Failed to send psmux layout: %v", err)
 				}
 			}
 		}

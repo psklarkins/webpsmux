@@ -33,37 +33,28 @@ const (
 	// Set the input buffer size
 	SetBufferSize = '6'
 
-	// Tmux layout update (JSON payload)
-	TmuxLayoutUpdate = '7'
-	// Tmux pane-specific output
-	TmuxPaneOutput = '8'
-	// Tmux mode update (copy mode state)
-	TmuxModeUpdate = '9'
-	// Tmux session info
-	TmuxSessionInfo = 'A'
-	// Tmux error
-	TmuxError = 'B'
+	// Psmux layout update (JSON payload)
+	PsmuxLayoutUpdate = '7'
+	// Psmux pane-specific output
+	PsmuxPaneOutput = '8'
+	// Psmux session info
+	PsmuxSessionInfo = 'A'
+	// Psmux error
+	PsmuxError = 'B'
 )
 
-// Tmux input message types (client -> server)
+// Psmux input message types (client -> server)
 const (
 	// Select a pane by ID
-	TmuxSelectPane = '5'
+	PsmuxSelectPane = '5'
 	// Select a window by ID
-	TmuxSelectWindow = '6'
+	PsmuxSelectWindow = '6'
 	// Split current pane (payload: "h" or "v")
-	TmuxSplitPane = '7'
+	PsmuxSplitPane = '7'
 	// Close a pane by ID
-	TmuxClosePane = '8'
-	// Enter/exit copy mode (payload: "1" or "0")
-	TmuxCopyMode = '9'
-	// Raw tmux command
-	TmuxSendCommand = 'A'
-	// Scroll in copy mode (payload: lines as string)
-	TmuxScrollUp = 'B'
-	TmuxScrollDown = 'C'
+	PsmuxClosePane = '8'
 	// Create new window
-	TmuxNewWindow = 'D'
+	PsmuxNewWindow = 'D'
 	// Switch session by name
-	TmuxSwitchSession = 'E'
+	PsmuxSwitchSession = 'E'
 )

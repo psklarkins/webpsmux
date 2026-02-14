@@ -1,6 +1,5 @@
-package tmux
+package psmux
 
-// Session represents a tmux session
 type Session struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
@@ -9,7 +8,6 @@ type Session struct {
 	Active   bool   `json:"active"`
 }
 
-// Layout represents the complete tmux state
 type Layout struct {
 	SessionID    string    `json:"sessionId"`
 	SessionName  string    `json:"sessionName"`
@@ -19,7 +17,6 @@ type Layout struct {
 	ActivePaneID string    `json:"activePaneId"`
 }
 
-// Window represents a tmux window
 type Window struct {
 	ID     string `json:"id"`
 	Name   string `json:"name"`
@@ -28,7 +25,6 @@ type Window struct {
 	Panes  []Pane `json:"panes"`
 }
 
-// Pane represents a tmux pane
 type Pane struct {
 	ID      string `json:"id"`
 	Index   int    `json:"index"`
@@ -41,15 +37,11 @@ type Pane struct {
 	Title   string `json:"title"`
 }
 
-// ModeState represents the current mode of a pane (normal, copy, etc.)
 type ModeState struct {
-	PaneID         string `json:"paneId"`
-	InCopyMode     bool   `json:"inCopyMode"`
-	ScrollPosition int    `json:"scrollPosition"`
-	HistorySize    int    `json:"historySize"`
+	PaneID     string `json:"paneId"`
+	InCopyMode bool   `json:"inCopyMode"`
 }
 
-// Event represents a tmux control mode event
 type Event struct {
 	Type    string
 	Payload string
