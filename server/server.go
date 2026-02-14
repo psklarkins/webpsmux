@@ -19,11 +19,11 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
-	"webtmux/bindata"
-	"webtmux/pkg/homedir"
-	"webtmux/pkg/randomstring"
-	"webtmux/pkg/tmux"
-	"webtmux/webtty"
+	"webpsmux/bindata"
+	"webpsmux/pkg/homedir"
+	"webpsmux/pkg/randomstring"
+	"webpsmux/pkg/tmux"
+	"webpsmux/webtty"
 )
 
 // Server provides a webtty HTTP endpoint.

@@ -1,7 +1,7 @@
 package server
 
 import (
-	"webtmux/webtty"
+	"webpsmux/webtty"
 )
 
 // Slave is webtty.Slave with some additional methods.

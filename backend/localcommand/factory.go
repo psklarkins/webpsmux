@@ -4,7 +4,7 @@ import (
 	"syscall"
 	"time"
 
-	"webtmux/server"
+	"webpsmux/server"
 )
 
 type Options struct {

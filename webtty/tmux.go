@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"webtmux/pkg/tmux"
+	"webpsmux/pkg/tmux"
 )
 
 // TmuxController interface for tmux operations

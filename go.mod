@@ -1,4 +1,4 @@
-module webtmux
+module webpsmux
 
 go 1.23
 

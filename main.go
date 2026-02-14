@@ -14,17 +14,17 @@ import (
 
 	cli "github.com/urfave/cli/v2"
 
-	"webtmux/backend/localcommand"
-	"webtmux/pkg/homedir"
-	"webtmux/server"
-	"webtmux/utils"
+	"webpsmux/backend/localcommand"
+	"webpsmux/pkg/homedir"
+	"webpsmux/server"
+	"webpsmux/utils"
 )
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "webtmux"
+	app.Name = "webpsmux"
 	app.Version = Version
-	app.Usage = "Web terminal for tmux with visual pane layout"
+	app.Usage = "Web terminal for psmux with visual pane layout"
 	app.HideHelpCommand = true
 	appOptions := &server.Options{}
 
@@ -125,7 +125,7 @@ func main() {
 		ctx, cancel := context.WithCancel(context.Background())
 		gCtx, gCancel := context.WithCancel(context.Background())
 
-		log.Printf("WebTmux is starting with command: %s", strings.Join(args.Slice(), " "))
+		log.Printf("WebPsmux is starting with command: %s", strings.Join(args.Slice(), " "))
 
 		errs := make(chan error, 1)
 		go func() {
