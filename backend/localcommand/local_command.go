@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/UserExistsError/conpty"
@@ -21,6 +22,7 @@ type LocalCommand struct {
 	closeTimeout time.Duration
 
 	cpty      *conpty.ConPty
+	closeOnce sync.Once
 	ptyClosed chan struct{}
 }
 
@@ -57,11 +59,7 @@ func New(command string, argv []string, headers map[string][]string, options ...
 	}
 
 	go func() {
-		defer func() {
-			lcmd.cpty.Close()
-			close(lcmd.ptyClosed)
-		}()
-
+		defer close(lcmd.ptyClosed)
 		_, _ = lcmd.cpty.Wait(context.Background())
 	}()
 
@@ -77,14 +75,14 @@ func (lcmd *LocalCommand) Write(p []byte) (n int, err error) {
 }
 
 func (lcmd *LocalCommand) Close() error {
-	lcmd.cpty.Close()
-	for {
-		select {
-		case <-lcmd.ptyClosed:
-			return nil
-		case <-lcmd.closeTimeoutC():
-			return nil
-		}
+	lcmd.closeOnce.Do(func() {
+		lcmd.cpty.Close()
+	})
+	select {
+	case <-lcmd.ptyClosed:
+		return nil
+	case <-lcmd.closeTimeoutC():
+		return nil
 	}
 }
 
