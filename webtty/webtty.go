@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"log"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -30,8 +29,8 @@ type WebTTY struct {
 	bufferSize int
 	writeMutex sync.Mutex
 
-	// Tmux controller for tmux-specific operations
-	tmuxCtrl TmuxController
+	// Psmux controller for psmux-specific operations
+	psmuxCtrl PsmuxController
 }
 
 // New creates a new instance of WebTTY.
@@ -147,10 +146,10 @@ func (wt *WebTTY) sendInitializeMessage() error {
 		}
 	}
 
-	// Send initial tmux layout if available
-	if wt.tmuxCtrl != nil {
-		wt.tmuxCtrl.RefreshLayout()
-		if err := wt.SendTmuxLayout(); err != nil {
+	// Send initial psmux layout if available
+	if wt.psmuxCtrl != nil {
+		wt.psmuxCtrl.RefreshLayout()
+		if err := wt.SendPsmuxLayout(); err != nil {
 			// Non-fatal: log and continue
 		}
 	}
@@ -201,15 +200,6 @@ func (wt *WebTTY) handleMasterReadEvent(data []byte) error {
 			return errors.Wrapf(err, "failed to decode received data")
 		}
 
-		// Debug: log all input
-		if n > 0 {
-			if decodedBuffer[0] == 0x1b {
-				log.Printf("DEBUG: Escape sequence: %v (len=%d)", decodedBuffer[:n], n)
-			} else if decodedBuffer[0] < 0x20 {
-				log.Printf("DEBUG: Control char: %v (len=%d)", decodedBuffer[:n], n)
-			}
-		}
-
 		_, err = wt.slave.Write(decodedBuffer[:n])
 		if err != nil {
 			return errors.Wrapf(err, "failed to write received data to slave")
@@ -256,9 +246,9 @@ func (wt *WebTTY) handleMasterReadEvent(data []byte) error {
 		wt.slave.ResizeTerminal(columns, rows)
 
 	default:
-		// Check if it's a tmux message
-		if isTmuxMessage(data[0]) {
-			return wt.handleTmuxMessage(data[0], data[1:])
+		// Check if it's a psmux message
+		if isPsmuxMessage(data[0]) {
+			return wt.handlePsmuxMessage(data[0], data[1:])
 		}
 		return errors.Errorf("unknown message type `%c`", data[0])
 	}
