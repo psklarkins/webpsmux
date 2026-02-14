@@ -18,3 +18,8 @@ Thumbs.db
 /webpsmux.exe
 
 # Don't ignore builds/ - we want prebuilt binaries in repo
+
+# Installer build artifacts
+/webpsmux-installer.zip
+/installer/bin/
+/installer/config/
