@@ -1,4 +1,4 @@
-// WebTmux - Main entry point
+// WebPsmux - Main entry point
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebglAddon } from '@xterm/addon-webgl';
@@ -14,15 +14,12 @@ const MSG = {
   Ping: '2',
   ResizeTerminal: '3',
   SetEncoding: '4',
-  TmuxSelectPane: '5',
-  TmuxSelectWindow: '6',
-  TmuxSplitPane: '7',
-  TmuxClosePane: '8',
-  TmuxCopyMode: '9',
-  TmuxScrollUp: 'B',
-  TmuxScrollDown: 'C',
-  TmuxNewWindow: 'D',
-  TmuxSwitchSession: 'E',
+  PsmuxSelectPane: '5',
+  PsmuxSelectWindow: '6',
+  PsmuxSplitPane: '7',
+  PsmuxClosePane: '8',
+  PsmuxNewWindow: 'D',
+  PsmuxSwitchSession: 'E',
 
   // Output (server -> client)
   Output: '1',
@@ -31,21 +28,18 @@ const MSG = {
   SetPreferences: '4',
   SetReconnect: '5',
   SetBufferSize: '6',
-  TmuxLayoutUpdate: '7',
-  TmuxModeUpdate: '9',
+  PsmuxLayoutUpdate: '7',
 };
 
-class WebTmux {
+class WebPsmux {
   constructor() {
     this.terminal = null;
     this.fitAddon = null;
     this.ws = null;
     this.reconnectInterval = null;
     this.bufferSize = 1024 * 1024;
-    this.inCopyMode = false;
     this.layout = null;
     this.pendingSessionSwitch = null;
-    this.oscBuffer = ''; // Buffer for OSC sequence detection
 
     this.init();
   }
@@ -62,7 +56,7 @@ class WebTmux {
         cursor: '#f0f0f0',
         selection: 'rgba(255, 255, 255, 0.3)',
       },
-      scrollback: 0, // tmux handles scrollback via copy mode
+      scrollback: 0, // psmux handles scrollback
       allowProposedApi: true,
     });
 
@@ -130,7 +124,6 @@ class WebTmux {
       }
 
       // Map arrow keys to CSI sequences (ESC [ A/B/C/D)
-      // Using CSI instead of SS3 for better compatibility
       const arrowMap = {
         'ArrowUp': '\x1b[A',
         'ArrowDown': '\x1b[B',
@@ -139,19 +132,18 @@ class WebTmux {
       };
 
       if (arrowMap[ev.key]) {
-        // Send raw CSI sequence
         const seq = arrowMap[ev.key];
         const binary = String.fromCharCode(...[...seq].map(c => c.charCodeAt(0)));
         this.sendMessage(MSG.Input, btoa(binary));
-        return false; // Prevent xterm.js default handling
+        return false;
       }
 
       // Handle Ctrl+N (down) and Ctrl+P (up) for fzf navigation
       if (ev.ctrlKey && !ev.altKey && !ev.metaKey) {
         const ctrlMap = {
-          'n': '\x0e', // Ctrl+N = 0x0e = 14
-          'p': '\x10', // Ctrl+P = 0x10 = 16
-          'j': '\x0a', // Ctrl+J = newline
+          'n': '\x0e', // Ctrl+N
+          'p': '\x10', // Ctrl+P
+          'j': '\x0a', // Ctrl+J
           'k': '\x0b', // Ctrl+K
         };
         const key = ev.key.toLowerCase();
@@ -166,84 +158,17 @@ class WebTmux {
     });
 
     this.terminal.onData((data) => {
-      if (this.inCopyMode && data.length === 1) {
-        // Exit copy mode on any key press (except scroll keys)
-        this.sendMessage(MSG.TmuxCopyMode, '0');
-        this.inCopyMode = false;
-      }
-      // Encode string to bytes, then to base64 (matches original gotty)
+      // Encode string to bytes, then to base64
       const bytes = this.encoder.encode(data);
       const binary = String.fromCharCode(...bytes);
       this.sendMessage(MSG.Input, btoa(binary));
     });
 
-    // Setup touch/scroll handling for copy mode
-    this.setupTouchHandling();
-
     // Connect WebSocket
     this.connect();
 
     // Expose for components
-    window.webtmux = this;
-  }
-
-  setupTouchHandling() {
-    const container = document.getElementById('terminal');
-    let touchStartY = 0;
-
-    // Touch handling for mobile scroll -> copy mode
-    container.addEventListener('touchstart', (e) => {
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    container.addEventListener('touchmove', (e) => {
-      const deltaY = touchStartY - e.touches[0].clientY;
-      const threshold = 30;
-
-      if (Math.abs(deltaY) > threshold) {
-        if (!this.inCopyMode) {
-          this.sendMessage(MSG.TmuxCopyMode, '1');
-          this.inCopyMode = true;
-        }
-
-        const lines = Math.floor(Math.abs(deltaY) / 20);
-        if (lines > 0) {
-          // Swipe up (deltaY > 0) = scroll DOWN in history (show newer)
-          // Swipe down (deltaY < 0) = scroll UP in history (show older)
-          if (deltaY > 0) {
-            this.sendMessage(MSG.TmuxScrollDown, String(lines));
-          } else {
-            this.sendMessage(MSG.TmuxScrollUp, String(lines));
-          }
-          touchStartY = e.touches[0].clientY;
-        }
-      }
-    }, { passive: true });
-
-    // Mouse wheel for desktop scroll -> copy mode
-    this.terminal.attachCustomWheelEventHandler((event) => {
-      // Only intercept scroll up (entering history) - deltaY < 0 = wheel up
-      if (event.deltaY < 0) {
-        if (!this.inCopyMode) {
-          this.sendMessage(MSG.TmuxCopyMode, '1');
-          this.inCopyMode = true;
-        }
-      }
-
-      if (this.inCopyMode) {
-        const lines = Math.max(1, Math.floor(Math.abs(event.deltaY) / 50));
-        // Wheel up (deltaY < 0) = scroll UP in tmux (show older history)
-        // Wheel down (deltaY > 0) = scroll DOWN in tmux (show newer)
-        if (event.deltaY < 0) {
-          this.sendMessage(MSG.TmuxScrollUp, String(lines));
-        } else {
-          this.sendMessage(MSG.TmuxScrollDown, String(lines));
-        }
-        return false; // Prevent default scroll
-      }
-
-      return true; // Allow normal handling when not in copy mode
-    });
+    window.webpsmux = this;
   }
 
   connect() {
@@ -288,12 +213,10 @@ class WebTmux {
       // Check if there are other sessions to switch to
       const otherSessions = this.layout?.sessions?.filter(s => !s.active) || [];
       if (otherSessions.length > 0) {
-        // Auto-reconnect and switch to another session
         this.pendingSessionSwitch = otherSessions[0].name;
         console.log('Auto-reconnecting to session:', this.pendingSessionSwitch);
         setTimeout(() => this.connect(), 500);
       } else if (this.reconnectInterval) {
-        // Normal reconnect behavior
         setTimeout(() => this.connect(), this.reconnectInterval * 1000);
       }
     };
@@ -346,14 +269,9 @@ class WebTmux {
         this.bufferSize = parseInt(payload, 10);
         break;
 
-      case MSG.TmuxLayoutUpdate:
+      case MSG.PsmuxLayoutUpdate:
         this.layout = JSON.parse(payload);
         this.dispatchLayoutUpdate();
-        break;
-
-      case MSG.TmuxModeUpdate:
-        const modeState = JSON.parse(payload);
-        this.inCopyMode = modeState.inCopyMode;
         break;
 
       default:
@@ -376,47 +294,37 @@ class WebTmux {
 
   dispatchLayoutUpdate() {
     // Notify sidebar and other components
-    window.dispatchEvent(new CustomEvent('tmux-layout-update', {
+    window.dispatchEvent(new CustomEvent('psmux-layout-update', {
       detail: this.layout
     }));
   }
 
   // Public API for components
   selectPane(paneId) {
-    this.sendMessage(MSG.TmuxSelectPane, paneId);
+    this.sendMessage(MSG.PsmuxSelectPane, paneId);
   }
 
   selectWindow(windowId) {
-    this.sendMessage(MSG.TmuxSelectWindow, windowId);
+    this.sendMessage(MSG.PsmuxSelectWindow, windowId);
   }
 
   splitPane(horizontal) {
-    this.sendMessage(MSG.TmuxSplitPane, horizontal ? 'h' : 'v');
+    this.sendMessage(MSG.PsmuxSplitPane, horizontal ? 'h' : 'v');
   }
 
   closePane(paneId) {
-    this.sendMessage(MSG.TmuxClosePane, paneId);
+    this.sendMessage(MSG.PsmuxClosePane, paneId);
   }
 
   newWindow() {
-    this.sendMessage(MSG.TmuxNewWindow, '');
+    this.sendMessage(MSG.PsmuxNewWindow, '');
   }
 
   switchSession(sessionName) {
-    this.sendMessage(MSG.TmuxSwitchSession, sessionName);
+    this.sendMessage(MSG.PsmuxSwitchSession, sessionName);
   }
 
-  enterCopyMode() {
-    this.sendMessage(MSG.TmuxCopyMode, '1');
-    this.inCopyMode = true;
-  }
-
-  exitCopyMode() {
-    this.sendMessage(MSG.TmuxCopyMode, '0');
-    this.inCopyMode = false;
-  }
-
-  // Handle OSC 52 clipboard sequences from tmux
+  // Handle OSC 52 clipboard sequences
   // Format: ESC ] 52 ; Pc ; Pd BEL  or  ESC ] 52 ; Pc ; Pd ESC \
   handleOSC52(data) {
     const ESC = String.fromCharCode(0x1b);
@@ -479,5 +387,5 @@ class WebTmux {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  new WebTmux();
+  new WebPsmux();
 });

@@ -1,7 +1,7 @@
 // Mobile controls component
 import { LitElement, html, css } from 'lit';
 
-class WebtmuxMobileControls extends LitElement {
+class WebpsmuxMobileControls extends LitElement {
   static properties = {
     showPaneSelector: { type: Boolean },
     showSessionSelector: { type: Boolean },
@@ -255,7 +255,7 @@ class WebtmuxMobileControls extends LitElement {
     this.showSessionSelector = false;
     this.layout = null;
 
-    window.addEventListener('tmux-layout-update', (e) => {
+    window.addEventListener('psmux-layout-update', (e) => {
       this.layout = e.detail;
     });
   }
@@ -369,13 +369,13 @@ class WebtmuxMobileControls extends LitElement {
   }
 
   sendPrefix() {
-    // Send Ctrl+B (tmux prefix)
+    // Send Ctrl+B (psmux prefix)
     // ASCII code for Ctrl+B is 0x02
-    window.webtmux?.terminal?.input('\x02');
+    window.webpsmux?.terminal?.input('\x02');
   }
 
   splitPane(horizontal) {
-    window.webtmux?.splitPane(horizontal);
+    window.webpsmux?.splitPane(horizontal);
   }
 
   togglePaneSelector() {
@@ -383,16 +383,16 @@ class WebtmuxMobileControls extends LitElement {
   }
 
   selectPane(paneId) {
-    window.webtmux?.selectPane(paneId);
+    window.webpsmux?.selectPane(paneId);
     this.showPaneSelector = false;
   }
 
   selectWindow(windowId) {
-    window.webtmux?.selectWindow(windowId);
+    window.webpsmux?.selectWindow(windowId);
   }
 
   newWindow() {
-    window.webtmux?.newWindow();
+    window.webpsmux?.newWindow();
   }
 
   toggleSessionSelector() {
@@ -404,9 +404,9 @@ class WebtmuxMobileControls extends LitElement {
   }
 
   switchSession(sessionName) {
-    window.webtmux?.switchSession(sessionName);
+    window.webpsmux?.switchSession(sessionName);
     this.showSessionSelector = false;
   }
 }
 
-customElements.define('webtmux-mobile-controls', WebtmuxMobileControls);
+customElements.define('webpsmux-mobile-controls', WebpsmuxMobileControls);

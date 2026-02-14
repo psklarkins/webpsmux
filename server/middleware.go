@@ -191,7 +191,7 @@ func (server *Server) wrapLogger(handler http.Handler) http.Handler {
 
 func (server *Server) wrapHeaders(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Server", "WebTmux")
+		w.Header().Set("Server", "WebPsmux")
 		handler.ServeHTTP(w, r)
 	})
 }
@@ -221,7 +221,7 @@ func (server *Server) wrapBasicAuth(handler http.Handler, credential string) htt
 		token := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 
 		if len(token) != 2 || strings.ToLower(token[0]) != "basic" {
-			w.Header().Set("WWW-Authenticate", `Basic realm="WebTmux"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="WebPsmux"`)
 			http.Error(w, "Bad Request", http.StatusUnauthorized)
 			return
 		}
@@ -234,7 +234,7 @@ func (server *Server) wrapBasicAuth(handler http.Handler, credential string) htt
 
 		if credential != string(payload) {
 			authRateLimiter.recordFailure(ip)
-			w.Header().Set("WWW-Authenticate", `Basic realm="WebTmux"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="WebPsmux"`)
 			http.Error(w, "Authorization failed", http.StatusUnauthorized)
 			return
 		}
