@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -198,12 +199,7 @@ func (server *Server) wrapHeaders(handler http.Handler) http.Handler {
 
 func (server *Server) wrapBasicAuth(handler http.Handler, credential string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Extract IP (handle proxies)
-		ip := r.RemoteAddr
-		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-			ip = strings.Split(forwarded, ",")[0]
-		}
-		ip = strings.TrimSpace(strings.Split(ip, ":")[0])
+		ip := extractClientIP(r)
 
 		// Check if locked out
 		if locked, remaining, lockType := authRateLimiter.checkLocked(ip); locked {
@@ -244,4 +240,27 @@ func (server *Server) wrapBasicAuth(handler http.Handler, credential string) htt
 		log.Printf("Basic Authentication Succeeded: %s", r.RemoteAddr)
 		handler.ServeHTTP(w, r)
 	})
+}
+
+func extractClientIP(r *http.Request) string {
+	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+		first := strings.TrimSpace(strings.Split(forwarded, ",")[0])
+		if first != "" {
+			if host, _, err := net.SplitHostPort(first); err == nil {
+				return strings.Trim(host, "[]")
+			}
+			return strings.Trim(first, "[]")
+		}
+	}
+
+	if realIP := strings.TrimSpace(r.Header.Get("X-Real-IP")); realIP != "" {
+		return strings.Trim(realIP, "[]")
+	}
+
+	host, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))
+	if err == nil {
+		return strings.Trim(host, "[]")
+	}
+
+	return strings.Trim(strings.TrimSpace(r.RemoteAddr), "[]")
 }
