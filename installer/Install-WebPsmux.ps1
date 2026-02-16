@@ -126,15 +126,31 @@ foreach ($file in @("$binDir\webpsmux.exe", "$binDir\psmux.exe", "$configDir\web
 }
 Write-OK "Installer files present"
 
-# ─── Step 2: Generate password ──────────────────────────────────────
+# ─── Step 2: Credentials ─────────────────────────────────────────────
 
 Write-Step "Credentials"
 
 if (-not $Password) {
-    $Password = New-RandomPassword
-    Write-OK "Generated password (shown in summary)"
+    Write-Host ""
+    Write-Host "    Choose a password for basic auth (username: $Username)" -ForegroundColor White
+    Write-Host "    Press Enter to auto-generate a random password." -ForegroundColor Gray
+    Write-Host ""
+    $securePass = Read-Host -Prompt "    Password" -AsSecureString
+    $typedPass = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+        [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePass))
+
+    if ([string]::IsNullOrWhiteSpace($typedPass)) {
+        $Password = New-RandomPassword
+        Write-OK "Generated random password (shown in summary)"
+    } else {
+        if ($typedPass.Length -lt 8) {
+            throw "Password must be at least 8 characters."
+        }
+        $Password = $typedPass
+        Write-OK "Using provided password"
+    }
 } else {
-    Write-OK "Using provided password"
+    Write-OK "Using password from -Password parameter"
 }
 
 # ─── Step 3: Install IIS features ───────────────────────────────────

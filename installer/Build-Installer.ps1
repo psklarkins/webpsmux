@@ -81,10 +81,11 @@ Write-Host "  Creating zip archive..." -ForegroundColor Gray
 # Remove existing zip
 if (Test-Path $OutputPath) { Remove-Item $OutputPath -Force }
 
-# Include: Install script, Uninstall script, bin/, config/
+# Include: Install script, Uninstall script, Change-Password script, bin/, config/
 $filesToZip = @(
     "$installerDir\Install-WebPsmux.ps1",
     "$installerDir\Uninstall-WebPsmux.ps1",
+    "$installerDir\Change-Password.ps1",
     "$binDir",
     "$configDir"
 )
