@@ -13,11 +13,13 @@ if (elem !== null) {
     var term: Terminal;
     term = new OurXterm(elem);
 
-    const httpsEnabled = window.location.protocol == "https:";
-    const queryArgs = (gotty_ws_query_args === "") ? "" : "?" + gotty_ws_query_args;
-    const url = (httpsEnabled ? 'wss://' : 'ws://') + window.location.host + window.location.pathname + 'ws' + queryArgs;
+    const base = window.location.href.endsWith("/") ? window.location.href : window.location.href + "/";
+    const wsUrl = new URL("ws", base);
+    wsUrl.protocol = (window.location.protocol === "https:") ? "wss:" : "ws:";
+    wsUrl.search = gotty_ws_query_args === "" ? "" : gotty_ws_query_args;
+
     const args = window.location.search;
-    const factory = new ConnectionFactory(url, protocols);
+    const factory = new ConnectionFactory(wsUrl.toString(), protocols);
     const wt = new WebTTY(term, factory, args, gotty_auth_token);
     const closer = wt.open();
 

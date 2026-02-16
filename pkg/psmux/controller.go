@@ -5,12 +5,16 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Controller struct {
 	sessionName string
 	layoutCache *Layout
 	layoutMu    sync.RWMutex
+	refreshMu   sync.Mutex
+	lastRefresh time.Time
+	minInterval time.Duration
 	eventChan   chan Event
 	closeChan   chan struct{}
 }
@@ -20,6 +24,7 @@ func NewController(sessionName string) (*Controller, error) {
 		sessionName: sessionName,
 		eventChan:   make(chan Event, 100),
 		closeChan:   make(chan struct{}),
+		minInterval: 300 * time.Millisecond,
 	}
 	return c, nil
 }
@@ -56,6 +61,13 @@ func (c *Controller) GetLayout() *Layout {
 }
 
 func (c *Controller) RefreshLayout() error {
+	c.refreshMu.Lock()
+	defer c.refreshMu.Unlock()
+
+	if !c.lastRefresh.IsZero() && time.Since(c.lastRefresh) < c.minInterval {
+		return nil
+	}
+
 	sessionsOut, err := c.runPsmux("ls")
 	if err != nil {
 		return fmt.Errorf("failed to list sessions: %w", err)
@@ -117,6 +129,7 @@ func (c *Controller) RefreshLayout() error {
 	c.layoutMu.Lock()
 	c.layoutCache = layout
 	c.layoutMu.Unlock()
+	c.lastRefresh = time.Now()
 
 	return nil
 }

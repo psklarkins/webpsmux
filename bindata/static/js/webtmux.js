@@ -172,10 +172,11 @@ class WebPsmux {
   }
 
   connect() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}${window.location.pathname}ws`;
+    const base = window.location.href.endsWith('/') ? window.location.href : window.location.href + '/';
+    const wsUrl = new URL('ws', base);
+    wsUrl.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
-    this.ws = new WebSocket(wsUrl, ['webtty']);
+    this.ws = new WebSocket(wsUrl.toString(), ['webtty']);
 
     this.ws.onopen = () => {
       console.log('WebSocket connected');
