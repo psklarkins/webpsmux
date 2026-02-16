@@ -13,7 +13,8 @@ if (elem !== null) {
     var term: Terminal;
     term = new OurXterm(elem);
 
-    const wsUrl = new URL("ws", window.location.href);
+    const base = window.location.href.endsWith("/") ? window.location.href : window.location.href + "/";
+    const wsUrl = new URL("ws", base);
     wsUrl.protocol = (window.location.protocol === "https:") ? "wss:" : "ws:";
     wsUrl.search = gotty_ws_query_args === "" ? "" : gotty_ws_query_args;
 
